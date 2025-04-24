@@ -2,19 +2,30 @@ import gym_super_mario_bros #import the mario game
 from nes_py.wrappers import JoypadSpace #import joypad wrapper
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT #import actions of mario
 import cv2 #import opencv so that we can resize the screen
-
+from gym.wrappers import FrameStack, GrayScaleObservation #for making states gray (rgb = 3gray)
+from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv #for converting env to vector and giving last couple frames to agent
+from matplotlib import pyplot as plt
 env = gym_super_mario_bros.make('SuperMarioBros-v0') #this will create a environment for super mario bros.
 env = JoypadSpace(env, SIMPLE_MOVEMENT) #now mario can do only his movements in the environment (right, left, jump...)
 
+### since colored images (rgb) have 3 chanels it takes too many spaces
+### but gray images only have 1 chanel so that it takes 1/3 spaces
+env = GrayScaleObservation(env, keep_dim = True) # make states gray
+
+env = DummyVecEnv([lambda: env]) #wrap env for making it vectorized (now it is in VecEnv format) (now you can use sb3)
+
+env = VecFrameStack(env, 4, channels_order='last') #last 4 observation
 
 done = True #this boolean will check if game is end or not
 
-for step in range(10000):
+for step in range(99999):
     if done:
         state = env.reset()
 
-    state, reward, done, info = env.step(env.action_space.sample()) #make a random move and return state, reward, done, info
+    state, reward, done, info = env.step([env.action_space.sample()]) #make a random move and return state, reward, done, info
 
+    #not doing this part will make process very very much slower.
+    #If you want to avoid this, use simply "env.renger()" rather then this converting
     frame = env.render(mode = 'rgb_array') #frame = env.render but in [(red, blue, green)...] array
     frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) #since we took rgb array. we have to convert it to bgr array.
     frame_resized = cv2.resize(frame_bgr, (800, 600)) #now it will display screen in 800x800pixel
@@ -22,6 +33,10 @@ for step in range(10000):
 
     if cv2.waitKey(1) & 0xFF == ord('q'):  #waitkey means fps and if you press q screen will close
         break
+
+
+
+
 
 
 #close environment and screen
