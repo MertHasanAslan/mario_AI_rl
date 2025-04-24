@@ -4,7 +4,13 @@ from gym_super_mario_bros.actions import SIMPLE_MOVEMENT #import actions of mari
 import cv2 #import opencv so that we can resize the screen
 from gym.wrappers import FrameStack, GrayScaleObservation #for making states gray (rgb = 3gray)
 from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv #for converting env to vector and giving last couple frames to agent
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt #for visuliation graphs etc.
+import os
+from stable_baselines3 import PPO #a reinforcement learning algo that we are using for this game
+from stable_baselines3.common.callbacks import BaseCallback #for saving AI models
+from classes.saving import call_back
+from show import show
+
 env = gym_super_mario_bros.make('SuperMarioBros-v0') #this will create a environment for super mario bros.
 env = JoypadSpace(env, SIMPLE_MOVEMENT) #now mario can do only his movements in the environment (right, left, jump...)
 
@@ -16,29 +22,16 @@ env = DummyVecEnv([lambda: env]) #wrap env for making it vectorized (now it is i
 
 env = VecFrameStack(env, 4, channels_order='last') #last 4 observation
 
-done = True #this boolean will check if game is end or not
 
-for step in range(99999):
-    if done:
-        state = env.reset()
+checkpoint_dir = './train/'
+log_dir = './logs/'
 
-    state, reward, done, info = env.step([env.action_space.sample()]) #make a random move and return state, reward, done, info
+callback = call_back(check_freq=10000, save_path=checkpoint_dir) #for saving AI model every 10000 steps
 
-    #not doing this part will make process very very much slower.
-    #If you want to avoid this, use simply "env.renger()" rather then this converting
-    frame = env.render(mode = 'rgb_array') #frame = env.render but in [(red, blue, green)...] array
-    frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR) #since we took rgb array. we have to convert it to bgr array.
-    frame_resized = cv2.resize(frame_bgr, (800, 600)) #now it will display screen in 800x800pixel
-    cv2.imshow("Super Mario Bros", frame_resized) #display
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):  #waitkey means fps and if you press q screen will close
-        break
+# AI model which uses PPO algo for reinforcement learning
+#it will use CnnPolicy because this works with pictures very fast (frame = picture)
+AI_model = PPO('CnnPolicy', env, verbose=1, tensorboard_log=log_dir, learning_rate=0.000001, n_steps=512) 
 
 
+AI_model.learn(total_timesteps=1000000, callback=callback) #ai will start to learn
 
-
-
-
-#close environment and screen
-env.close() 
-cv2.destroyAllWindows()
