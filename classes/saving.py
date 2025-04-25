@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt #for visuliation graphs etc.
 import os
 from stable_baselines3 import PPO #a reinforcement learning algo that we are using for this game
 from stable_baselines3.common.callbacks import BaseCallback #for saving AI models
+#do not have to import torch because sb3 already using pytorch.
 
 class call_back(BaseCallback):
     def __init__(self, check_freq, save_path, verbose=1):
@@ -15,14 +16,14 @@ class call_back(BaseCallback):
         self.check_freq = check_freq
         self.save_path = save_path
     
-    def init_callback(self):
+    def _init_callback(self):
         if self.save_path is not None:
             os.makedirs(self.save_path, exist_ok = True)
 
-    def on_step(self):
+    def _on_step(self):
         if self.n_calls % self.check_freq ==0:
             model_path = os.path.join(self.save_path, 'best_model{}'.format(self.n_calls))
             self.model.save(model_path)
 
-            return True
+        return True
         
