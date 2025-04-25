@@ -59,7 +59,7 @@ def show_agent(path_of_model):
         if frame is not None: #prevent from crashing
             frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             frame_resized = cv2.resize(frame_bgr, (800, 600))
-            cv2.imshow("Super Mario Bros", frame_resized)
+            cv2.imshow("Super Mario Bros AI", frame_resized)
 
         if cv2.waitKey(1) & 0xFF == ord('q'): #q = break game
             break
